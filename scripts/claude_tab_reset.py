@@ -3,16 +3,17 @@
 iTerm2 AutoLaunch script: resets Claude Code permission-alert tab color
 when the user focuses the alerting tab.
 
-Uses iTerm2 session user variable (claude_alert) set by the Notification hook
-escape sequence, so no TTY path matching is needed.
+Uses iTerm2 session user variable (claude_alert) set by the Notification hook.
+Resets via profile API (set_use_tab_color=False) since async_inject doesn't
+process iTerm2's proprietary tab color OSC sequences.
 
-Install: copy to ~/Library/Application Support/iTerm2/Scripts/AutoLaunch/
-Requires: iTerm2 Python Runtime (Scripts > Manage > Install Python Runtime)
+Setup: Scripts > Manage > Install Python Runtime (one-time)
 """
 import iterm2
 import os
+import glob
 
-ALERT_FILE = "/tmp/claude-alert-tty"
+ALERT_PATTERN = "/tmp/claude-alert-*"
 
 
 async def main(connection):
@@ -35,15 +36,18 @@ async def main(connection):
                 continue
 
             if alert == "1":
-                # Reset tab color
-                await session.async_inject(b'\033]6;1;bg;*;default\a')
+                # Reset tab color via profile API
+                profile = iterm2.LocalWriteOnlyProfile()
+                profile.set_use_tab_color(False)
+                await session.async_set_profile_properties(profile)
                 # Clear the user variable
                 await session.async_set_variable("user.claude_alert", "")
-                # Remove sentinel file (so hook-based resets no-op)
-                try:
-                    os.unlink(ALERT_FILE)
-                except FileNotFoundError:
-                    pass
+                # Clean up any sentinel files for this session
+                for f in glob.glob(ALERT_PATTERN):
+                    try:
+                        os.unlink(f)
+                    except FileNotFoundError:
+                        pass
 
 
 iterm2.run_forever(main)
