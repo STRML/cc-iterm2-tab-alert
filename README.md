@@ -24,12 +24,12 @@ Three components:
 
 ```
 /plugin marketplace add STRML/cc-iterm2-tab-alert
-/plugin install cc-iterm2-tab-alert
+/plugin install iterm2-tab-alert
 ```
 
 Then restart Claude Code. The hooks activate automatically.
 
-For instant focus-based reset, run `/cc-iterm2-tab-alert:setup` in Claude Code.
+For instant focus-based reset, run `/iterm2-tab-alert:setup` in Claude Code.
 
 ### AI prompt
 
@@ -39,9 +39,9 @@ Paste this into Claude Code:
 Install the iTerm2 tab alert plugin:
 
 1. Run: /plugin marketplace add STRML/cc-iterm2-tab-alert
-2. Run: /plugin install cc-iterm2-tab-alert
+2. Run: /plugin install iterm2-tab-alert
 3. Restart Claude Code
-4. Run: /cc-iterm2-tab-alert:setup
+4. Run: /iterm2-tab-alert:setup
 ```
 
 ### Manual

@@ -1,5 +1,5 @@
 {
-  "name": "cc-iterm2-tab-alert",
+  "name": "iterm2-tab-alert",
   "version": "1.0.0",
   "description": "iTerm2 tab highlighting for Claude Code permission requests — orange tab + dock bounce on permission, auto-reset on focus",
   "author": {
