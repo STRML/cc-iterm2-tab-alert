@@ -1,0 +1,18 @@
+{
+  "name": "cc-iterm2-tab-alert",
+  "description": "iTerm2 tab highlighting for Claude Code permission requests",
+  "owner": {
+    "name": "Samuel Reed"
+  },
+  "plugins": [
+    {
+      "name": "cc-iterm2-tab-alert",
+      "description": "Orange tab color + dock bounce when Claude needs permission, auto-reset on tab focus",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Samuel Reed"
+      }
+    }
+  ]
+}

@@ -1,125 +1,85 @@
 # Claude Code iTerm2 Tab Alert
 
-Visual tab highlighting for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) permission requests in iTerm2. When Claude needs approval, the tab turns orange and bounces the dock icon. The color resets instantly when you focus the tab — no need to wait for a hook to fire.
-
-https://github.com/user-attachments/assets/placeholder
+A [Claude Code plugin](https://docs.anthropic.com/en/docs/claude-code/plugins) that highlights your iTerm2 tab when Claude needs permission. The tab turns orange and bounces the dock icon. The color resets instantly when you focus the tab.
 
 ## How it works
 
-Three components work together:
+Three components:
 
-1. **Notification hook** (`iterm2-permission-alert.sh`) — When Claude requests permission, sets the tab to orange via iTerm2 escape sequences and tags the session with a user variable.
+1. **Notification hook** — When Claude requests permission, sets the tab to orange and tags the session with an iTerm2 user variable.
 
-2. **Reset hook** (`iterm2-tab-reset.sh`) — Clears the tab color when Claude resumes work (PostToolUse) or you submit a prompt (UserPromptSubmit). Acts as a fallback if the focus-based reset didn't fire.
+2. **Reset hook** — Clears the tab color when Claude resumes work (PostToolUse) or you submit a prompt (UserPromptSubmit). Fallback for the focus-based reset.
 
-3. **Focus-based reset** (`claude_tab_reset.py`) — An iTerm2 Python API script that monitors tab focus events. When you switch to a tab with an active alert, it resets the color immediately. No polling, no background processes — it uses iTerm2's native `FocusMonitor` API.
+3. **Focus-based reset** *(optional)* — An iTerm2 Python API script that monitors tab focus events. When you switch to a tab with an active alert, it resets the color immediately via the profile API.
 
 ## Requirements
 
 - [iTerm2](https://iterm2.com/) (macOS)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-- Python 3 (for the notification hook's JSON parsing)
-- iTerm2 Python Runtime (for the focus-based reset — optional but recommended)
+- iTerm2 Python Runtime (optional, for focus-based reset)
 
 ## Install
 
-### Option A: Script
+### As a Claude Code plugin (recommended)
 
-```bash
-git clone https://github.com/STRML/cc-iterm2-tab-alert.git
-cd cc-iterm2-tab-alert
-bash install.sh
+```
+/plugin marketplace add STRML/cc-iterm2-tab-alert
+/plugin install cc-iterm2-tab-alert
 ```
 
-Then:
-1. In iTerm2: **Scripts > Manage > Install Python Runtime** (one-time, for focus-based reset)
-2. In iTerm2: **Scripts > claude_tab_reset** (to start without restarting iTerm2)
-3. In Claude Code: run `/hooks` to reload hooks
+Then restart Claude Code. The hooks activate automatically.
 
-### Option B: AI prompt
+For instant focus-based reset, run `/cc-iterm2-tab-alert:setup` in Claude Code.
+
+### AI prompt
 
 Paste this into Claude Code:
 
 ```
-Install the iTerm2 tab alert hooks from https://github.com/STRML/cc-iterm2-tab-alert
+Install the iTerm2 tab alert plugin:
 
-1. Clone the repo to a temp directory
-2. Copy hooks/iterm2-permission-alert.sh and hooks/iterm2-tab-reset.sh to ~/.claude/hooks/
-3. Copy scripts/claude_tab_reset.py to ~/Library/Application Support/iTerm2/Scripts/AutoLaunch/
-4. Add the hooks from hooks.json to my ~/.claude/settings.json (merge into existing hooks, don't overwrite)
+1. Run: /plugin marketplace add STRML/cc-iterm2-tab-alert
+2. Run: /plugin install cc-iterm2-tab-alert
+3. Restart Claude Code
+4. Run: /cc-iterm2-tab-alert:setup
 ```
 
-### Option C: Manual
+### Manual
 
 1. Copy `hooks/iterm2-permission-alert.sh` and `hooks/iterm2-tab-reset.sh` to `~/.claude/hooks/`
 
-2. Copy `scripts/claude_tab_reset.py` to `~/Library/Application Support/iTerm2/Scripts/AutoLaunch/`
+2. Add the hooks from `hooks/hooks.json` to your `~/.claude/settings.json` (replace `${CLAUDE_PLUGIN_ROOT}` with `$HOME/.claude/hooks` in the command paths)
 
-3. Add the following to your `~/.claude/settings.json` (merge into any existing `hooks` key):
+3. *(Optional)* Copy `scripts/claude_tab_reset.py` to `~/Library/Application Support/iTerm2/Scripts/AutoLaunch/`
 
-```json
-{
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.claude/hooks/iterm2-permission-alert.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.claude/hooks/iterm2-tab-reset.sh"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.claude/hooks/iterm2-tab-reset.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-4. In iTerm2: **Scripts > Manage > Install Python Runtime**
-5. Restart iTerm2 (or **Scripts > claude_tab_reset** to start immediately)
+4. In iTerm2: **Scripts > Manage > Install Python Runtime**, then **Scripts > claude_tab_reset**
 
 ## Without the focus-based reset
 
-The Python script is optional. Without it, the tab color still resets — just not until Claude resumes work or you submit your next prompt. The hooks alone handle that case.
+The Python script is optional. Without it, the tab color still resets — just not until Claude resumes work or you submit your next prompt.
 
 ## Customization
 
 ### Tab color
 
-Edit `hooks/iterm2-permission-alert.sh` line 15. The format is iTerm2's proprietary OSC escape:
+Edit `hooks/iterm2-permission-alert.sh`. The format is iTerm2's proprietary OSC escape:
 
 ```bash
-# RGB components (0-255)
+# RGB components (0-255) — default is orange (255, 120, 0)
 printf '\033]6;1;bg;red;brightness;R\a\033]6;1;bg;green;brightness;G\a\033]6;1;bg;blue;brightness;B\a'
 ```
 
-The default is orange (`255, 120, 0`).
-
 ### Dock bounce
 
-Remove or comment out the `RequestAttention` line in the alert script to disable dock icon bouncing.
+Remove the `RequestAttention` line in the alert script to disable dock icon bouncing.
 
-## How the escape sequences work
+## Technical details
+
+### Per-session sentinel files
+
+Each Claude session writes its own sentinel file keyed by the TTY minor device number (`stat -f '%Lr' /dev/tty`), so multiple concurrent sessions don't interfere with each other.
+
+### Escape sequences
 
 | Escape | Purpose |
 |--------|---------|
@@ -129,6 +89,10 @@ Remove or comment out the `RequestAttention` line in the alert script to disable
 | `\033]6;1;bg;*;default\a` | Reset tab color to default |
 | `\033]1337;RequestAttention=1\a` | Bounce dock icon / flash tab |
 | `\033]1337;SetUserVar=NAME=BASE64\a` | Set session user variable |
+
+### Why `set_use_tab_color(False)` instead of `async_inject`
+
+iTerm2's `async_inject` doesn't process proprietary OSC sequences (like tab color). The focus-monitor uses the profile API (`set_use_tab_color(False)`) which directly controls the tab color state.
 
 ## License
 

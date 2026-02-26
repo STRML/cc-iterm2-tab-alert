@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/iterm2-permission-alert.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/iterm2-permission-alert.sh\""
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/iterm2-tab-reset.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/iterm2-tab-reset.sh\""
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/iterm2-tab-reset.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/iterm2-tab-reset.sh\""
           }
         ]
       }

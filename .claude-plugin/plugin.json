@@ -1,0 +1,13 @@
+{
+  "name": "cc-iterm2-tab-alert",
+  "version": "1.0.0",
+  "description": "iTerm2 tab highlighting for Claude Code permission requests — orange tab + dock bounce on permission, auto-reset on focus",
+  "author": {
+    "name": "Samuel Reed",
+    "url": "https://github.com/STRML"
+  },
+  "homepage": "https://github.com/STRML/cc-iterm2-tab-alert",
+  "repository": "https://github.com/STRML/cc-iterm2-tab-alert",
+  "license": "MIT",
+  "keywords": ["iterm2", "tab-color", "notifications", "permissions", "hooks"]
+}
