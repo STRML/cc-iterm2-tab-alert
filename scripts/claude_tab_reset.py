@@ -20,7 +20,11 @@ async def main(connection):
     app = await iterm2.async_get_app(connection)
     async with iterm2.FocusMonitor(connection) as monitor:
         while True:
-            update = await monitor.async_get_next_update()
+            try:
+                update = await monitor.async_get_next_update()
+            except Exception:
+                break  # Connection lost — exit cleanly, run_forever will restart
+
             if not update.active_session_changed:
                 continue
 
@@ -32,22 +36,25 @@ async def main(connection):
 
             try:
                 alert = await session.async_get_variable("user.claude_alert")
-            except Exception:
-                continue
+                if alert != "1":
+                    continue
 
-            if alert == "1":
                 # Reset tab color via profile API
                 profile = iterm2.LocalWriteOnlyProfile()
                 profile.set_use_tab_color(False)
                 await session.async_set_profile_properties(profile)
+
                 # Clear the user variable
                 await session.async_set_variable("user.claude_alert", "")
-                # Clean up any sentinel files for this session
+
+                # Clean up sentinel files
                 for f in glob.glob(ALERT_PATTERN):
                     try:
                         os.unlink(f)
                     except FileNotFoundError:
                         pass
+            except Exception:
+                continue  # Session gone or API error — skip, don't crash
 
 
 iterm2.run_forever(main)
